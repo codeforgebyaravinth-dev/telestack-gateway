@@ -1,0 +1,106 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Invoice {
+  amount           Float?
+  billingAccount   BillingAccount?    @relation(fields: [billingAccountId], references: [id])
+  billingAccountId String?
+  createdAt        DateTime           @default(now())
+  id               String             @id @default(cuid())
+  issuedAt         DateTime?
+  paidAt           DateTime?
+  status           EnumInvoiceStatus?
+  stripeInvoiceId  String?
+  updatedAt        DateTime           @updatedAt
+}
+
+model Project {
+  appwriteProjectId String?
+  createdAt         DateTime  @default(now())
+  id                String    @id @default(cuid())
+  isActive          Boolean?
+  name              String?
+  plan              Plan?     @relation(fields: [planId], references: [id])
+  planId            String?
+  suspendedAt       DateTime?
+  updatedAt         DateTime  @updatedAt
+  usages            Usage[]
+  user              User?     @relation(fields: [userId], references: [id])
+  userId            String?
+}
+
+model Usage {
+  apiCalls      Int?
+  cost          Float?
+  createdAt     DateTime  @default(now())
+  functionExecs Int?
+  id            String    @id @default(cuid())
+  isLimited     Boolean?
+  overUsage     Boolean?
+  periodEnd     DateTime?
+  periodStart   DateTime?
+  project       Project?  @relation(fields: [projectId], references: [id])
+  projectId     String?
+  storageUsed   Float?
+  updatedAt     DateTime  @updatedAt
+}
+
+model Plan {
+  createdAt     DateTime  @default(now())
+  features      Json?
+  id            String    @id @default(cuid())
+  monthlyPrice  Float?
+  name          String?
+  projects      Project[]
+  stripePriceId String?
+  updatedAt     DateTime  @updatedAt
+  yearlyPrice   Float?
+}
+
+model BillingAccount {
+  createdAt        DateTime  @default(now())
+  currentPeriodEnd DateTime?
+  id               String    @id @default(cuid())
+  invoices         Invoice[]
+  isActive         Boolean?
+  stripeCustomerId String?
+  updatedAt        DateTime  @updatedAt
+  user             User?     @relation(fields: [userId], references: [id])
+  userId           String?
+}
+
+model User {
+  billingAccounts  BillingAccount[]
+  createdAt        DateTime         @default(now())
+  email            String?          @unique
+  firstName        String?
+  id               String           @id @default(cuid())
+  lastName         String?
+  password         String
+  projects         Project[]
+  roles            Json
+  stripeCustomerId String?
+  updatedAt        DateTime         @updatedAt
+  username         String           @unique
+}
+
+model StripeWebhookEvent {
+  createdAt  DateTime  @default(now())
+  eventId    String?
+  id         String    @id @default(cuid())
+  payload    Json?
+  processed  Boolean?
+  receivedAt DateTime?
+  typeField  String?
+  updatedAt  DateTime  @updatedAt
+}
+
+enum EnumInvoiceStatus {
+  Option1
+}
